@@ -346,6 +346,7 @@
   display: block;
   border-radius: 8px;
   object-fit: contain;
+  cursor: zoom-in;
 }
 
 .hw-step-note {
@@ -509,6 +510,7 @@
   border-radius: 8px;
   border: 1px solid var(--hw-input-border);
   display: block;
+  cursor: zoom-in;
 }
 .hw-preview-remove {
   position: absolute;
@@ -710,3 +712,64 @@
   background: var(--hw-surface);
   color: var(--hw-accent-hover);
 }
+
+/* Lightbox Fullscreen Modal Overlay */
+.hw-lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 13, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hw-lightbox.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hw-lightbox-img {
+  max-width: 90%;
+  max-height: 85%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: scale(0.95);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  background: #000;
+}
+.hw-lightbox.open .hw-lightbox-img {
+  transform: scale(1);
+}
+.hw-lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  color: #ffffff;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  outline: none;
+}
+.hw-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: scale(1.05);
+  color: #f43f5e;
+}
+

@@ -12,6 +12,11 @@ const TEMPLATE = `
 
   <div class="hw-backdrop" id="hw-backdrop"></div>
 
+  <div class="hw-lightbox" id="hw-lightbox">
+    <button class="hw-lightbox-close" id="hw-lightbox-close" aria-label="Close image preview">✕</button>
+    <img class="hw-lightbox-img" id="hw-lightbox-img" src="" alt="Enlarged screenshot" />
+  </div>
+
   <div class="hw-sidebar" id="hw-sidebar">
     <div class="hw-header">
       <h2 class="hw-header-title">
@@ -291,6 +296,37 @@ export class HelpSidebarWidgetElement extends HTMLElement {
 
     // Refresh Tickets
     s.getElementById('hw-refresh-btn')?.addEventListener('click', () => this._loadTicketsStatus());
+
+    // Lightbox triggers for Guide Images
+    if (guideContainer) {
+      guideContainer.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('hw-step-img')) {
+          const imgSrc = (target as HTMLImageElement).src;
+          this._openLightbox(imgSrc);
+        }
+      });
+    }
+
+    // Lightbox triggers for Upload Preview Images
+    const previewContainer = s.getElementById('hw-preview');
+    if (previewContainer) {
+      previewContainer.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('hw-preview-img')) {
+          const imgSrc = (target as HTMLImageElement).src;
+          this._openLightbox(imgSrc);
+        }
+      });
+    }
+
+    // Close Lightbox
+    s.getElementById('hw-lightbox-close')?.addEventListener('click', () => this._closeLightbox());
+    s.getElementById('hw-lightbox')?.addEventListener('click', (e) => {
+      if (e.target === s.getElementById('hw-lightbox')) {
+        this._closeLightbox();
+      }
+    });
   }
 
   openSidebar() {
@@ -302,6 +338,22 @@ export class HelpSidebarWidgetElement extends HTMLElement {
     this._shadow.getElementById('hw-sidebar')?.classList.remove('open');
     this._shadow.getElementById('hw-backdrop')?.classList.remove('open');
     this._hideStatus();
+  }
+
+  _openLightbox(src: string) {
+    const lightbox = this._shadow.getElementById('hw-lightbox');
+    const img = this._shadow.getElementById('hw-lightbox-img') as HTMLImageElement | null;
+    if (lightbox && img) {
+      img.src = src;
+      lightbox.classList.add('open');
+    }
+  }
+
+  _closeLightbox() {
+    const lightbox = this._shadow.getElementById('hw-lightbox');
+    if (lightbox) {
+      lightbox.classList.remove('open');
+    }
   }
 
   async _pasteFromClipboard() {
