@@ -651,27 +651,31 @@ export class HelpSidebarWidgetElement extends HTMLElement {
 
   _getDefaultHelpGuide() {
     return {
-      title: "Help Guide & FAQs",
-      steps: [
+      processes: [
         {
-          step_number: 1,
-          title: "What is ThriveX AI Dashboard?",
-          description: "ThriveX AI is an intelligent project workspace and agile issue tracking platform. You can manage tasks in Kanban boards, set priorities, assign developers, and aggregate support requests in one beautiful console."
-        },
-        {
-          step_number: 2,
-          title: "How do I submit feedback / bugs?",
-          description: "Click on the <strong>Support & Feedback</strong> tab in this sidebar, select your category, enter your subject and description, paste or attach an optional screenshot, and click submit."
-        },
-        {
-          step_number: 3,
-          title: "How do I track my ticket status?",
-          description: "Any ticket you submit from this browser will be listed under the <strong>Ticket Status</strong> tab. We use secure, unguessable ticket UUIDs saved locally to fetch live real-time statuses directly from the project server."
-        },
-        {
-          step_number: 4,
-          title: "How do I invite members to my project?",
-          description: "Go to the Workspace page inside the dashboard, select your project, click on <strong>Manage Members</strong> on the top-right, search for your team members by their username or email, and add them."
+          title: "Help Guide & FAQs",
+          steps: [
+            {
+              step_number: 1,
+              title: "What is ThriveX AI Dashboard?",
+              description: "ThriveX AI is an intelligent project workspace and agile issue tracking platform. You can manage tasks in Kanban boards, set priorities, assign developers, and aggregate support requests in one beautiful console."
+            },
+            {
+              step_number: 2,
+              title: "How do I submit feedback / bugs?",
+              description: "Click on the <strong>Support & Feedback</strong> tab in this sidebar, select your category, enter your subject and description, paste or attach an optional screenshot, and click submit."
+            },
+            {
+              step_number: 3,
+              title: "How do I track my ticket status?",
+              description: "Any ticket you submit from this browser will be listed under the <strong>Ticket Status</strong> tab. We use secure, unguessable ticket UUIDs saved locally to fetch live real-time statuses directly from the project server."
+            },
+            {
+              step_number: 4,
+              title: "How do I invite members to my project?",
+              description: "Go to the Workspace page inside the dashboard, select your project, click on <strong>Manage Members</strong> on the top-right, search for your team members by their username or email, and add them."
+            }
+          ]
         }
       ]
     };
@@ -683,71 +687,93 @@ export class HelpSidebarWidgetElement extends HTMLElement {
 
     let html = '';
     
-    if (data.title) {
-      html += `<h3 class="hw-guide-main-title">${data.title}</h3>`;
+    // Backward compatibility for single process JSON format
+    let processes = data.processes;
+    if (!processes && data.steps) {
+      processes = [
+        {
+          title: data.title || "Help Guide",
+          steps: data.steps
+        }
+      ];
     }
 
-    const steps = data.steps || [];
-    steps.forEach((step: any, index: number) => {
-      const stepNum = step.step_number || step.number || (index + 1);
-      const isOpen = index === 0 ? 'open' : '';
-      const maxHeight = index === 0 ? 'style="max-height: 1000px;"' : 'style="max-height: 0px;"';
-      
-      let imagesHtml = '';
-      if (Array.isArray(step.images) && step.images.length > 0) {
-        imagesHtml = '<div class="hw-step-images-list">';
-        step.images.forEach((imgSrc: string) => {
-          imagesHtml += `
-            <div class="hw-step-image-wrap">
-              <img class="hw-step-img" src="${imgSrc}" alt="Step ${stepNum} screenshot" />
+    if (!processes || processes.length === 0) {
+      container.innerHTML = '<div class="hw-empty-state">No guides available</div>';
+      return;
+    }
+
+    // Keep track of absolute step index to initially open the very first step of the first process
+    let absoluteStepIndex = 0;
+
+    processes.forEach((process: any) => {
+      if (process.title) {
+        html += `<h3 class="hw-process-title">${process.title}</h3>`;
+      }
+
+      const steps = process.steps || [];
+      steps.forEach((step: any, index: number) => {
+        const stepNum = step.step_number || step.number || (index + 1);
+        const isOpen = absoluteStepIndex === 0 ? 'open' : '';
+        const maxHeight = absoluteStepIndex === 0 ? 'style="max-height: 1000px;"' : 'style="max-height: 0px;"';
+        absoluteStepIndex++;
+        
+        let imagesHtml = '';
+        if (Array.isArray(step.images) && step.images.length > 0) {
+          imagesHtml = '<div class="hw-step-images-list">';
+          step.images.forEach((imgSrc: string) => {
+            imagesHtml += `
+              <div class="hw-step-image-wrap">
+                <img class="hw-step-img" src="${imgSrc}" alt="Step ${stepNum} screenshot" />
+              </div>
+            `;
+          });
+          imagesHtml += '</div>';
+        }
+
+        let noteHtml = '';
+        if (step.note) {
+          noteHtml = `
+            <div class="hw-step-note flex gap-2">
+              <svg class="hw-note-icon text-blue-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #3b82f6;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <p class="hw-note-desc">${step.note}</p>
             </div>
           `;
-        });
-        imagesHtml += '</div>';
-      }
+        }
 
-      let noteHtml = '';
-      if (step.note) {
-        noteHtml = `
-          <div class="hw-step-note flex gap-2">
-            <svg class="hw-note-icon text-blue-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #3b82f6;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            <p class="hw-note-desc">${step.note}</p>
-          </div>
-        `;
-      }
+        let importantNoteHtml = '';
+        if (step.importantNote) {
+          importantNoteHtml = `
+            <div class="hw-step-important flex gap-2">
+              <svg class="hw-important-icon text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #f59e0b;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <div>
+                <p class="hw-important-title">Important Note</p>
+                <p class="hw-important-desc">${step.importantNote}</p>
+              </div>
+            </div>
+          `;
+        }
 
-      let importantNoteHtml = '';
-      if (step.importantNote) {
-        importantNoteHtml = `
-          <div class="hw-step-important flex gap-2">
-            <svg class="hw-important-icon text-amber-500" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #f59e0b;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div>
-              <p class="hw-important-title">Important Note</p>
-              <p class="hw-important-desc">${step.importantNote}</p>
+        html += `
+          <div class="hw-faq-item ${isOpen}">
+            <div class="hw-faq-header">
+              <div class="hw-step-header-left">
+                <span class="hw-step-number">${stepNum}</span>
+                <span class="hw-step-title">${step.title}</span>
+              </div>
+              <span class="hw-faq-icon">▼</span>
+            </div>
+            <div class="hw-faq-content" ${maxHeight}>
+              <div class="hw-faq-inner">
+                <p class="hw-step-desc">${step.description}</p>
+                ${imagesHtml}
+                ${noteHtml}
+                ${importantNoteHtml}
+              </div>
             </div>
           </div>
         `;
-      }
-
-      html += `
-        <div class="hw-faq-item ${isOpen}">
-          <div class="hw-faq-header">
-            <div class="hw-step-header-left">
-              <span class="hw-step-number">${stepNum}</span>
-              <span class="hw-step-title">${step.title}</span>
-            </div>
-            <span class="hw-faq-icon">▼</span>
-          </div>
-          <div class="hw-faq-content" ${maxHeight}>
-            <div class="hw-faq-inner">
-              <p class="hw-step-desc">${step.description}</p>
-              ${imagesHtml}
-              ${noteHtml}
-              ${importantNoteHtml}
-            </div>
-          </div>
-        </div>
-      `;
+      });
     });
 
     container.innerHTML = html;
