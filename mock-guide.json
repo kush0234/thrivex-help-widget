@@ -1,0 +1,42 @@
+{
+  "processes": [
+    {
+      "title": "Admin Dashboard",
+      "roles": ["admin"],
+      "steps": [
+        {
+          "step_number": 1,
+          "title": "Admin Configuration",
+          "description": "This is only visible to Admin role users."
+        }
+      ]
+    },
+    {
+      "title": "User Dashboard",
+      "roles": ["user", "admin", "developer"],
+      "steps": [
+        {
+          "step_number": 1,
+          "title": "General settings step for everyone",
+          "description": "This step is visible to admin, standard user, and developer."
+        },
+        {
+          "step_number": 2,
+          "title": "Developer only step",
+          "roles": ["developer"],
+          "description": "This step is only for developer role users."
+        }
+      ]
+    },
+    {
+      "title": "Public Guide",
+      "steps": [
+        {
+          "step_number": 1,
+          "title": "Public step",
+          "description": "This is visible to all users (even with no role specified)."
+        }
+      ]
+    }
+  ]
+}

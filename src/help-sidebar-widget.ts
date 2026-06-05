@@ -136,6 +136,7 @@ const TEMPLATE = `
 export class HelpSidebarWidgetElement extends HTMLElement {
   _shadow: ShadowRoot;
   _screenshotFile: File | null = null;
+  _guideData: any = null;
 
   constructor() {
     super();
@@ -143,7 +144,15 @@ export class HelpSidebarWidgetElement extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ['user-name', 'user-email', 'button-style', 'theme'];
+    return ['user-name', 'user-email', 'button-style', 'theme', 'user-role'];
+  }
+
+  get userRole() {
+    return this.getAttribute('user-role') || '';
+  }
+
+  set userRole(val: string) {
+    this.setAttribute('user-role', val);
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -155,6 +164,11 @@ export class HelpSidebarWidgetElement extends HTMLElement {
     if (name === 'user-email') {
       const input = this._shadow.getElementById('hw-email') as HTMLInputElement | null;
       if (input) input.value = newValue || '';
+    }
+    if (name === 'user-role') {
+      if (this._guideData) {
+        this._renderHelpGuide(this._guideData);
+      }
     }
   }
 
@@ -637,13 +651,16 @@ export class HelpSidebarWidgetElement extends HTMLElement {
       const response = await fetch(guideUrl);
       if (response.ok) {
         const data = await response.json();
+        this._guideData = data;
         this._renderHelpGuide(data);
       } else {
         throw new Error('Guide file not found');
       }
     } catch (err) {
       console.warn(`Dynamic help guide not found at ${guideUrl}. Falling back to default FAQs.`);
-      this._renderHelpGuide(this._getDefaultHelpGuide());
+      const defaultGuide = this._getDefaultHelpGuide();
+      this._guideData = defaultGuide;
+      this._renderHelpGuide(defaultGuide);
     } finally {
       if (loader) loader.style.display = 'none';
     }
@@ -703,10 +720,45 @@ export class HelpSidebarWidgetElement extends HTMLElement {
       return;
     }
 
+    const userRole = (this.getAttribute('user-role') || '').trim().toLowerCase();
+
+    // Filter processes and steps based on roles (Approach A)
+    const filteredProcesses = processes
+      .map((process: any) => {
+        const hasProcessRoleRestriction = Array.isArray(process.roles) && process.roles.length > 0;
+        const isProcessAllowed = !hasProcessRoleRestriction || (userRole && process.roles.some((r: string) => typeof r === 'string' && r.trim().toLowerCase() === userRole));
+
+        if (!isProcessAllowed) {
+          return null;
+        }
+
+        const steps = process.steps || [];
+        const originalStepsLength = steps.length;
+        const visibleSteps = steps.filter((step: any) => {
+          const hasStepRoleRestriction = Array.isArray(step.roles) && step.roles.length > 0;
+          return !hasStepRoleRestriction || (userRole && step.roles.some((r: string) => typeof r === 'string' && r.trim().toLowerCase() === userRole));
+        });
+
+        if (originalStepsLength > 0 && visibleSteps.length === 0) {
+          return null;
+        }
+
+        return {
+          ...process,
+          steps: visibleSteps
+        };
+      })
+      .filter((p: any) => p !== null);
+
+    if (filteredProcesses.length === 0) {
+      container.innerHTML = '<div class="hw-empty-state">No guides available for your role</div>';
+      return;
+    }
+
     // Keep track of absolute step index to initially open the very first step of the first process
     let absoluteStepIndex = 0;
 
-    processes.forEach((process: any) => {
+    filteredProcesses.forEach((process: any) => {
       if (process.title) {
         html += `<h3 class="hw-process-title">${process.title}</h3>`;
       }

@@ -8,6 +8,7 @@ export interface HelpSidebarWidgetProps {
   userName?: string;
   userEmail?: string;
   guideUrl?: string;
+  userRole?: string;
 }
 
 export function HelpSidebarWidget({
@@ -18,6 +19,7 @@ export function HelpSidebarWidget({
   userName = '',
   userEmail = '',
   guideUrl = '',
+  userRole = '',
 }: HelpSidebarWidgetProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -39,6 +41,7 @@ export function HelpSidebarWidget({
       user-name={userName}
       user-email={userEmail}
       guide-url={guideUrl}
+      user-role={userRole}
     />
   );
 }
