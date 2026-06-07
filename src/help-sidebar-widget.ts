@@ -311,6 +311,29 @@ export class HelpSidebarWidgetElement extends HTMLElement {
     // Refresh Tickets
     s.getElementById('hw-refresh-btn')?.addEventListener('click', () => this._loadTicketsStatus());
 
+    // Toggle ticket comments
+    const listContainer = s.getElementById('hw-ticket-list');
+    if (listContainer) {
+      listContainer.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const toggleBtn = target.closest('.hw-comments-toggle-btn') as HTMLElement | null;
+        if (!toggleBtn) return;
+
+        const ticketNum = toggleBtn.dataset.ticket;
+        const wrapper = listContainer.querySelector(`#comments-list-${ticketNum}`) as HTMLElement | null;
+        if (!wrapper) return;
+
+        const isOpen = toggleBtn.classList.contains('open');
+        if (isOpen) {
+          toggleBtn.classList.remove('open');
+          wrapper.style.maxHeight = '0px';
+        } else {
+          toggleBtn.classList.add('open');
+          wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+        }
+      });
+    }
+
     // Lightbox triggers for Guide Images
     if (guideContainer) {
       guideContainer.addEventListener('click', (e) => {
@@ -591,6 +614,51 @@ export class HelpSidebarWidgetElement extends HTMLElement {
           else if (finalStatus === 'resolved') badgeClass = 'hw-badge-resolved';
           else if (finalStatus === 'closed') badgeClass = 'hw-badge-closed';
 
+          let commentsHtml = '';
+          const comments = t.comments || [];
+          if (comments.length > 0) {
+            commentsHtml += `
+              <div class="hw-ticket-comments-section">
+                <button class="hw-comments-toggle-btn" data-ticket="${finalNumber}">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 4px;">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span>Replies (${comments.length})</span>
+                  <span class="hw-comments-toggle-chevron">▼</span>
+                </button>
+                <div class="hw-comments-list-wrapper" id="comments-list-${finalNumber}" style="max-height: 0px;">
+                  <div class="hw-comments-list">
+            `;
+            
+            comments.forEach((c: any) => {
+              const cDateStr = new Date(c.created_at).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+              const isStaff = c.is_staff || false;
+              const commentClass = isStaff ? 'hw-comment-item staff' : 'hw-comment-item';
+              const badgeMarkup = isStaff ? `<span class="hw-comment-staff-badge">Staff</span>` : '';
+
+              commentsHtml += `
+                    <div class="${commentClass}">
+                      <div class="hw-comment-meta">
+                        <span class="hw-comment-author">${c.author_name || 'Anonymous'} ${badgeMarkup}</span>
+                        <span class="hw-comment-date">${cDateStr}</span>
+                      </div>
+                      <p class="hw-comment-text">${c.content}</p>
+                    </div>
+              `;
+            });
+
+            commentsHtml += `
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
           html += `
             <div class="hw-ticket-card">
               <div class="hw-ticket-card-header">
@@ -607,6 +675,7 @@ export class HelpSidebarWidgetElement extends HTMLElement {
                   <span>👤 By: <strong>${t.submitter_name || 'Anonymous'}</strong> (${t.submitter_email || 'no-email'})</span>
                 </div>
               </div>
+              ${commentsHtml}
             </div>
           `;
         });
@@ -703,7 +772,7 @@ export class HelpSidebarWidgetElement extends HTMLElement {
     if (!container) return;
 
     let html = '';
-    
+
     // Backward compatibility for single process JSON format
     let processes = data.processes;
     if (!processes && data.steps) {
@@ -769,7 +838,7 @@ export class HelpSidebarWidgetElement extends HTMLElement {
         const isOpen = absoluteStepIndex === 0 ? 'open' : '';
         const maxHeight = absoluteStepIndex === 0 ? 'style="max-height: 1000px;"' : 'style="max-height: 0px;"';
         absoluteStepIndex++;
-        
+
         let imagesHtml = '';
         if (Array.isArray(step.images) && step.images.length > 0) {
           imagesHtml = '<div class="hw-step-images-list">';
