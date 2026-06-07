@@ -629,7 +629,7 @@ export class HelpSidebarWidgetElement extends HTMLElement {
                 <div class="hw-comments-list-wrapper" id="comments-list-${finalNumber}" style="max-height: 0px;">
                   <div class="hw-comments-list">
             `;
-            
+
             comments.forEach((c: any) => {
               const cDateStr = new Date(c.created_at).toLocaleDateString(undefined, {
                 month: 'short',
@@ -637,9 +637,9 @@ export class HelpSidebarWidgetElement extends HTMLElement {
                 hour: '2-digit',
                 minute: '2-digit'
               });
-              const isStaff = c.is_staff || false;
-              const commentClass = isStaff ? 'hw-comment-item staff' : 'hw-comment-item';
-              const badgeMarkup = isStaff ? `<span class="hw-comment-staff-badge">Staff</span>` : '';
+              const isDeveloper = c.is_developer || false;
+              const commentClass = isDeveloper ? 'hw-comment-item developer' : 'hw-comment-item';
+              const badgeMarkup = isDeveloper ? `<span class="hw-comment-developer-badge">Developer</span>` : '';
 
               commentsHtml += `
                     <div class="${commentClass}">
