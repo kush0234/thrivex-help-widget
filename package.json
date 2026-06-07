@@ -1,6 +1,6 @@
 {
   "name": "thrivex-help-widget",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "ThriveX Universal Help & Support Sidebar Widget",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
